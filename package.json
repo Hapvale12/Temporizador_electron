@@ -1,0 +1,43 @@
+{
+    "name": "counter",
+    "version": "1.0.0",
+    "description": "Temporizador para reuniones JW.",
+    "main": "main.js",
+    "build": {
+        "appId": "com.hapastor.temporizador",
+        "productName": "Temporizador de Reuniones",
+        "win": {
+            "target": "nsis",
+            "icon": "imgs/icon.png"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
+        },
+        "files": [
+            "main.js",
+            "index.html",
+            "secondScreen.html",
+            "js/**/*",
+            "css/**/*",
+            "imgs/**/*",
+            "json_data/**/*",
+            "package.json"
+        ],
+        "directories": {
+            "output": "dist"
+        }
+    },
+    "scripts": {
+        "start": "electron .",
+        "dist": "electron-builder"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "electron": "^38.2.0",
+        "electron-builder": "^26.0.12",
+        "electron-reload": "^2.0.0-alpha.1"
+    }
+}

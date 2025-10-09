@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
+    <title>Temporizador</title>
+</head>
+
+<body>
+    <div class="columns">
+        <div class="switch-box">
+            <label class="switch">
+                <input type="checkbox" id="toggleSwitch">
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <div>
+            <p id="title_meeting"></p>
+        </div>
+        <table class="table" style="background-color: #818181;">
+        </table>
+    </div>
+
+    <div class="counter">
+        <form class="form">
+            <div class="input-container">
+                <input type="number" min="1" width="50%" class="time-input" placeholder="Ingrese tiempo">
+                <select name="format" class="min-sec" disabled>
+                    <option value="minutes">Minutos</option>
+                </select>
+                <button type="submit" class="set-btn">Iniciar</button>
+            </div>
+        </form>
+        <p class="countdown">01 : 00</p>
+        <div class="buttons">
+            <button class="stop-btn" disabled>Pausar</button>
+            <button class="reset-btn" disabled>Reiniciar</button>
+        </div>
+        <div class="message-text-container">
+            <input id="message-text" type="text" class="message-text" placeholder="Mensaje a mostrar">
+            <button id="show_message" class="show-message-btn">Mostrar</button>
+        </div>
+    </div>
+
+    <div class="top-right-controls">
+        <a class="hide-btn" href=""><img src="./imgs/view.png" class="hide-btn-img"></a>
+        <div class="share-controls-container">
+            <button id="open-preview-btn">
+                <img src="./imgs/select-screen.png" alt="Seleccionar pantalla" style="width: 25px; height: 25px;">
+            </button>
+            <span id="selected-source-name">Ninguna</span>
+            <button id="share-btn">
+                <img class="share-btn-img" src="./imgs/share-screen.png" alt="Compartir pantalla">
+            </button>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="modal-hidden">
+        <div class="modal-content">
+            <h2>Selecciona una pantalla o ventana</h2>
+            <div id="preview-grid"></div>
+            <button id="close-modal-btn">Cancelar</button>
+        </div>
+    </div>
+
+    <video id="mini-video" autoplay></video>
+    <script type="text/javascript" src="js/script.js"></script>
+</body>
+
+</html>
