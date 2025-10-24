@@ -213,7 +213,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.3s, opacity 0.3s;
-    color: #1a1a1a;
+    color: #ffffff;
 }
 
 .set-btn {
@@ -529,6 +529,7 @@ input:checked+.slider:before {
     transition: all 0.2s ease-in-out;
     position: relative;
     background-color: #000;
+    height: fit-content;
 }
 
 .preview-item:hover {
@@ -558,10 +559,12 @@ input:checked+.slider:before {
     font-weight: bold;
 }
 
-.preview-item img {
+.preview-item video {
     width: 100%;
     height: auto;
     display: block;
+    object-fit: cover;
+    background-color: #000;
 }
 
 .preview-item p {

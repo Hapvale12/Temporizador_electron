@@ -98,16 +98,17 @@ body {
 }
 
 .message-text-show {
-    grid-area: bot-center;
+    position: fixed; /* Usamos fixed para posicionar relativo a la ventana */
+    top: 68%; /* Lo centramos verticalmente */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Ajuste fino para un centrado perfecto */
     width: 100%;
-    padding: 2rem;
     color: white;
     background-color: red;
     text-align: center;
     font-size: clamp(2rem, 10vw, 8rem);
     font-weight: 700;
-    animation: parpadeoSuave 0.25s linear infinite;
-    /* Tu ajuste de velocidad */
+    animation: parpadeoSuave 4s linear infinite;
 }
 
 .message-text-hide {
@@ -122,7 +123,7 @@ body {
     }
 
     50% {
-        opacity: 0.2;
+        opacity: 0.35;
     }
 }
 

@@ -1,6 +1,6 @@
 {
     "name": "counter",
-    "version": "1.0.0",
+    "version": "1.5.0",
     "description": "Temporizador para reuniones JW.",
     "main": "main.js",
     "build": {

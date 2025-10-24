@@ -1,5 +1,3 @@
-// js/secondScreen.js - VERSIÓN FINAL con gestión de clases de estado
-
 const { ipcRenderer } = require('electron');
 
 // --- Selectores del DOM ---
@@ -12,13 +10,13 @@ const raisedHandsList = document.getElementById('raised-hands-list');
 // --- Lógica del Reloj ---
 function updateClock() {
     if (dateTimeField) {
-        dateTimeField.innerHTML = new Date().toLocaleString('es-ES', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
+        dateTimeField.innerHTML = new Date().toLocaleString('en-PE', {
+            hour: '2-digit', minute: '2-digit', hour12: true
+        }).replace(' ', '&nbsp;');
     }
 }
 updateClock();
-setInterval(updateClock, 1000);
+setInterval(updateClock, 10000);
 
 // --- Listeners de IPC ---
 
@@ -29,8 +27,12 @@ ipcRenderer.on('timer-updated', (event, data) => {
 
 // Escucha las actualizaciones de mensajes
 ipcRenderer.on('message-updated', (event, data) => {
-    messageText.innerText = data.text;
-    messageText.className = data.className;
+    if (data.action === 'show') {
+        messageText.innerText = data.message;
+        messageText.className = 'message-text-show';
+    } else if (data.action === 'hide') {
+        messageText.className = 'message-text-hide';
+    }
 });
 
 // Escucha el cambio de color de fondo del body
@@ -46,7 +48,7 @@ ipcRenderer.on('background-updated', (event, color) => {
 // Escucha la lista de manos levantadas
 ipcRenderer.on('raised-hands-updated', (event, names) => {
     if (raisedHandsList) {
-        raisedHandsList.innerHTML = ''; // Limpiamos la lista
+        raisedHandsList.innerHTML = '';
         names.forEach(name => {
             const li = document.createElement('li');
             li.textContent = name;
@@ -76,5 +78,5 @@ ipcRenderer.on('hide-screen-video', () => {
         screenVideo.srcObject = null;
     }
     screenVideo.hidden = true;
-    document.body.classList.remove('screen-sharing-active'); // <-- QUITAMOS LA CLASE
+    document.body.classList.remove('screen-sharing-active');
 });

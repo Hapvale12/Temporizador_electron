@@ -1,6 +1,6 @@
 // main.js - VERSIÓN FINAL CORREGIDA (con conversión de miniaturas)
 
-const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, globalShortcut } = require('electron');
 const path = require('path');
 
 // Solo activamos electron-reload si NO estamos en producción (es decir, si la app no está empaquetada)
@@ -29,6 +29,14 @@ function createMainWindow() {
     mainWindow.on('closed', () => {
         app.quit();
     });
+
+    // Escuchamos el evento 'did-start-loading' en webContents, que se dispara
+    // cuando la ventana principal comienza a recargarse (por ejemplo, por electron-reload).
+    mainWindow.webContents.on('did-start-loading', () => {
+        if (secondWindow) {
+            secondWindow.reload();
+        }
+    });
 }
 
 function createSecondWindow() {
@@ -47,7 +55,18 @@ function createSecondWindow() {
     });
 }
 
-app.whenReady().then(createMainWindow);
+app.whenReady().then(() => {
+    createMainWindow();
+    globalShortcut.register('Control+Shift+S', () => {
+        if (mainWindow) {
+            mainWindow.webContents.send('global-shortcut-toggle-share');
+        }
+    });
+});
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+});
 
 // --- MANEJADORES DE COMUNICACIÓN (IPC) ---
 
@@ -70,15 +89,13 @@ ipcMain.handle('get-screen-sources', async () => {
     // 1. Obtenemos las fuentes y pedimos una miniatura de un tamaño específico
     const sources = await desktopCapturer.getSources({
         types: ['screen'],
-        thumbnailSize: { width: 320, height: 180 },
     });
 
-    // 2. Mapeamos los resultados y CONVERTIMOS cada miniatura a un Data URL
+    // 2. Mapeamos solo la información necesaria (ID y nombre).
     return sources.map((source) => {
         return {
             id: source.id,
             name: source.name,
-            thumbnailURL: source.thumbnail.toDataURL(), // Convertimos la miniatura a una URL de datos
         };
     });
 });

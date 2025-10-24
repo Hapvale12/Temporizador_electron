@@ -35,7 +35,7 @@ const day = new Date().getDay();
 let check_meeting_day = (day >= 1 && day <= 5) ? true : false;
 let selectedSourceId = null;
 let isSharing = false;
-let previewInterval = null; // <--- NUEVO: Guardará el ID del intervalo
+let activePreviewStreams = []; // Guardará todos los streams de video de la previsualización
 let miniVideoStream = null;
 
 // --- Lógica de Previsualización ---
@@ -60,54 +60,89 @@ previewGrid.addEventListener('click', (e) => {
 });
 
 async function loadPreviews() {
-    if (!previewGrid.innerHTML) { // Solo muestra "Cargando..." la primera vez
-        previewGrid.innerHTML = '<p style="color: white; text-align: center;">Cargando...</p>';
-    }
+    previewGrid.innerHTML = '<p style="color: white; text-align: center;">Cargando...</p>';
     const sources = await ipcRenderer.invoke('get-screen-sources');
+    previewGrid.innerHTML = ''; // Limpiamos el "Cargando..."
 
-    // Si es la primera carga, limpiamos el "Cargando..."
-    if (previewGrid.querySelector('p')) {
-        previewGrid.innerHTML = '';
-    }
+    // Para cada fuente, creamos un elemento de video y obtenemos su stream
+    sources.forEach(async (source) => {
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        item.dataset.id = source.id;
+        item.dataset.name = source.name;
 
-    sources.forEach(source => {
-        // Buscamos si el elemento ya existe
-        let existingItem = previewGrid.querySelector(`[data-id="${source.id}"]`);
-        if (existingItem) {
-            // Si existe, solo actualizamos la miniatura
-            const img = existingItem.querySelector('img');
-            if (img) img.src = source.thumbnailURL;
-        } else {
-            // Si no existe, lo creamos
-            const item = document.createElement('div');
-            item.className = 'preview-item';
-            item.dataset.id = source.id; // Guardamos el ID
-            item.dataset.name = source.name; // Guardamos el nombre
-            item.innerHTML = `<img src="${source.thumbnailURL}" alt="Previsualización de ${source.name}"><p>${source.name}</p>`;
-            if (source.id === selectedSourceId) {
-                item.classList.add('selected');
-            }
-            previewGrid.appendChild(item);
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.muted = true;
+
+        const nameOverlay = document.createElement('p');
+        nameOverlay.innerText = source.name;
+
+        item.innerHTML = `
+            <video autoplay muted></video>
+            <p>${source.name}</p>
+        `;
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: { 
+                    mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: source.id },
+                    constraints: {
+                        width: 320,
+                        height: 180,
+                    }
+                }
+            });
+            item.querySelector('video').srcObject = stream;
+            activePreviewStreams.push(stream); // Guardamos el stream para detenerlo después
+        } catch (error) {
+            console.error('Error al obtener stream para ' + source.name, error);
         }
+
+        if (source.id === selectedSourceId) {
+            item.classList.add('selected');
+        }
+        previewGrid.appendChild(item);
     });
 }
+
 function showModal() {
     previewModal.classList.remove('modal-hidden');
-    loadPreviews(); // Carga inicial inmediata
-    // Iniciamos un intervalo para recargar las vistas previas cada 2 segundos
-    previewInterval = setInterval(loadPreviews, 2000);
+    loadPreviews();
 }
 function hideModal() {
     previewModal.classList.add('modal-hidden');
-    // Detenemos el intervalo cuando el modal se cierra para no gastar recursos
-    clearInterval(previewInterval);
-    previewGrid.innerHTML = ''; // Limpiamos la grilla para la próxima vez
+    // Detenemos TODOS los streams de video activos para liberar recursos
+    activePreviewStreams.forEach(stream => stream.getTracks().forEach(track => track.stop()));
+    activePreviewStreams = [];
+    previewGrid.innerHTML = '';
 }
 openPreviewBtn.addEventListener('click', showModal);
 closeModalBtn.addEventListener('click', hideModal);
 previewModal.addEventListener('click', (e) => {
     if (e.target === previewModal) {
         hideModal();
+    }
+});
+
+// --- Lógica para enviar mensajes a la segunda pantalla ---
+show_message.addEventListener('click', () => {
+    const messageInput = document.getElementById('message-text');
+    if (show_message.innerText === 'Mostrar') {
+        if (messageInput.value !== '') {
+            // Enviamos el mensaje y la acción 'show'
+            ipcRenderer.send('update-message', {
+                message: messageInput.value,
+                action: 'show'
+            });
+            show_message.innerText = 'Ocultar';
+        }
+    } else {
+        // Enviamos la acción 'hide' para limpiar el mensaje
+        ipcRenderer.send('update-message', { action: 'hide' });
+        messageInput.value = '';
+        show_message.innerText = 'Mostrar';
     }
 });
 
@@ -236,6 +271,10 @@ resetBtn.addEventListener('click', () => {
     running = false;
     ipcRenderer.send('update-background', 'black');
     countDown.removeAttribute('style');
+    // Ocultamos el mensaje en la segunda pantalla al reiniciar
+    ipcRenderer.send('update-message', { action: 'hide' });
+    document.getElementById('message-text').value = '';
+    show_message.innerText = 'Mostrar';
     resetCountDown();
 });
 
@@ -335,3 +374,29 @@ function load_table_meeting() {
         }
     }
 }
+
+ipcRenderer.on('global-shortcut-toggle-share', () => {
+    console.log("Atajo Control+Shift+S presionado");
+    if (shareBtn) {
+        shareBtn.click(); 
+
+        const showSilentNotification = () => {
+            const notification = new Notification('Compartir Pantalla', {
+                body: isSharing ? 'Compartición de pantalla iniciada.' : 'Compartición de pantalla detenida.',
+                silent: true
+            });
+
+            setTimeout(() => {
+                notification.close();
+            }, 3000);
+        };
+
+        if (Notification.permission === 'granted') {
+            showSilentNotification();
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                permission === 'granted' && showSilentNotification();
+            });
+        }
+    }
+});
